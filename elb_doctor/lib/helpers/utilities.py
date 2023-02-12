@@ -1,5 +1,7 @@
 import sys
 import time
+import boto3
+import json 
 
 class output_renderer:
 
@@ -179,3 +181,90 @@ class output_renderer:
 
             else:
                 print(row_format.format(target_port, self.color_fail_red(i["TargetHealth"]["State"]),i["TargetHealth"]["Reason"],i["TargetHealth"]["Description"]))
+
+
+class cloud_formation: 
+
+    #check if the same combination already exist 
+
+
+    def launch_hc_logging(answers,stack_name,log_group_name,log_stream_name):
+
+        client = boto3.client('cloudformation')
+
+        
+        response = client.create_stack(
+            StackName=stack_name,
+            # TemplateBody='string',
+            TemplateURL='https://publicbuckettbd.s3.ap-southeast-2.amazonaws.com/elbdoc_hc_logging.yaml',
+            Parameters=[
+                {
+                    'ParameterKey': 'Answers',
+                    'ParameterValue': json.dumps(answers),
+                    # 'UsePreviousValue': True|False,
+                    # 'ResolvedValue': 'string'
+                },
+                {
+                    'ParameterKey': 'SequenceParaName',
+                    'ParameterValue': "elb-hc-logging-seq-token-" + str(hash(log_stream_name)) ,
+                    # 'UsePreviousValue': True|False,
+                    # 'ResolvedValue': 'string'
+                },
+                {
+                    'ParameterKey': 'ElbHCLogGroupName',
+                    'ParameterValue': log_group_name,
+                    # 'UsePreviousValue': True|False,
+                    # 'ResolvedValue': 'string'
+                },
+                {
+                    'ParameterKey': 'ElbHCLogStreamName',
+                    'ParameterValue': log_stream_name,
+                    # 'UsePreviousValue': True|False,
+                    # 'ResolvedValue': 'string'
+                },
+            ],
+            # DisableRollback=True|False,
+            # RollbackConfiguration={
+            #     'RollbackTriggers': [
+            #         {
+            #             'Arn': 'string',
+            #             'Type': 'string'
+            #         },
+            #     ],
+            #     'MonitoringTimeInMinutes': 123
+            # },
+            TimeoutInMinutes=5,
+            # NotificationARNs=[
+            #     'string',
+            # ],
+            # Capabilities=[
+            #     'CAPABILITY_IAM'|'CAPABILITY_NAMED_IAM'|'CAPABILITY_AUTO_EXPAND',
+            # ],
+            # ResourceTypes=[
+            #     'string',
+            # ],
+            # RoleARN='string',
+            OnFailure='ROLLBACK',
+            # StackPolicyBody='string',
+            # StackPolicyURL='string',
+            Tags=[
+                {
+                    'Key': 'aws-elbdoc-hc-logging',
+                    'Value': 'xxxxxxxxxxxxxx'
+                },
+            ],
+            # ClientRequestToken='string',
+            # EnableTerminationProtection=True|False
+        )
+        print(response['StackId'])
+
+        # try: 
+        #     response = client.describe_stacks(
+        #         StackName=response['StackId']
+        #     )
+        # except: 
+
+        # print(response)
+
+    def clean_up(): 
+        client = boto3.client('cloudformation')

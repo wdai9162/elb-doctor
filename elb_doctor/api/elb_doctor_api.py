@@ -106,5 +106,5 @@ class ElbDoctorApi:
         parse_target_group = ParseTargetGroup()
 
         result = parse_target_group.parse_target_group(get_target_group.get_elbv2_tg(answers, config))
-
+        print(result)
         return result
